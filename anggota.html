@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#C6FF00" />
+  <title>Finance App — Anggota</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>Anggota</h1>
+    <div class="header-actions">
+      <button id="btn-add-member" class="btn btn-sm btn-primary" title="Tambah anggota">+ Anggota</button>
+      <a href="pengaturan.html" class="icon-btn" title="Pengaturan" aria-label="Pengaturan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+        </svg>
+      </a>
+      <button id="btn-logout" class="btn btn-sm btn-outline" title="Logout">Keluar</button>
+    </div>
+  </header>
+
+  <main class="container dashboard-content">
+    <div class="filter-bar">
+      <input
+        type="search"
+        id="search-input"
+        class="form-control"
+        placeholder="Cari nama anggota..."
+      />
+    </div>
+
+    <div class="filter-chips">
+      <button class="chip active" data-filter="all">Semua</button>
+      <button class="chip" data-filter="aktif">Aktif</button>
+      <button class="chip" data-filter="nonaktif">Nonaktif</button>
+    </div>
+
+    <div id="member-list">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <a class="nav-item" data-page="dashboard.html" href="dashboard.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      <span class="nav-label">Beranda</span>
+    </a>
+    <a class="nav-item" data-page="iuran.html" href="iuran.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+        <path d="M9 16l2 2 4-4"/>
+      </svg>
+      <span class="nav-label">Iuran</span>
+    </a>
+    <a class="nav-item" data-page="riwayat.html" href="riwayat.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+      <span class="nav-label">Riwayat</span>
+    </a>
+    <a class="nav-item" data-page="anggota.html" href="anggota.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      <span class="nav-label">Anggota</span>
+    </a>
+  </nav>
+
+  <!-- Modal: Add / Edit Member -->
+  <div class="overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Tambah Anggota</h2>
+        <button class="modal-close" id="modal-close" type="button">×</button>
+      </div>
+
+      <form id="member-form">
+        <div class="form-group">
+          <label for="member-name">Nama</label>
+          <input type="text" id="member-name" class="form-control" placeholder="Nama anggota" required />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="member-phone">No. HP (opsional)</label>
+            <input type="tel" id="member-phone" class="form-control" placeholder="08xx" />
+          </div>
+          <div class="form-group">
+            <label for="member-amount">Iuran Harian (Rp)</label>
+            <input type="number" id="member-amount" class="form-control" placeholder="0" min="0" step="1" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="member-status">Status</label>
+          <select id="member-status" class="form-control">
+            <option value="aktif">Aktif</option>
+            <option value="nonaktif">Nonaktif</option>
+          </select>
+        </div>
+
+        <button type="submit" id="btn-save-member" class="btn btn-primary">Simpan</button>
+        <button type="button" id="btn-delete-member" class="btn btn-danger" style="margin-top:10px; display:none">
+          Hapus Anggota
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Loading -->
+  <div id="loading" class="loading-overlay">
+    <div class="spinner" style="width:40px;height:40px;border-width:4px"></div>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/calc.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/anggota.js"></script>
+</body>
+</html>

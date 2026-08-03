@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#C6FF00" />
+  <title>Finance App — Login</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-header">
+      <h1>Finance</h1>
+      <p>DATABASE</p>
+    </div>
+
+    <div class="card login-card">
+      <div id="login-error" class="login-error"></div>
+
+      <form id="login-form" autocomplete="on">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input
+            type="text"
+            id="username"
+            class="form-control"
+            placeholder="Masukkan username"
+            required
+            autofocus
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            class="form-control"
+            placeholder="Masukkan password"
+            required
+          />
+        </div>
+
+        <button type="submit" id="btn-login" class="btn btn-primary">
+          Masuk
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

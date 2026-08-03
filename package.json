@@ -1,0 +1,9 @@
+{
+  "name": "finance-app-web",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Aplikasi kas & iuran harian (Neo Brutalism) — HTML/CSS/JS + Google Apps Script backend",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}

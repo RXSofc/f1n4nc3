@@ -17,6 +17,7 @@ Versi sebelumnya cuma pencatatan transaksi umum (pemasukan/pengeluaran). Versi i
 - **Auto-sync ke kas** — begitu iuran ditandai lunas, otomatis muncul sebagai transaksi pemasukan kategori "Iuran" di buku kas. Kalau dibatalkan, transaksinya ikut kehapus. Jadi saldo kas selalu akurat tanpa dobel catat.
 - **Rekap bulanan** — matrix anggota × tanggal (lunas/belum tiap hari), plus daftar "paling sering nunggak" bulan berjalan.
 - **Export CSV** — baik riwayat transaksi maupun rekap iuran bulanan.
+- **Reset Semua Data** — halaman Pengaturan (ikon ⚙️ di header) punya "Zona Berbahaya": hapus semua transaksi, anggota, dan catatan iuran (plus foto di Drive) sekaligus, dijaga PIN 6 digit yang **divalidasi di server** (bukan cuma di frontend, jadi gak bisa dilewatin dengan manggil API langsung).
 - Halaman dipecah jadi 4: **Beranda** (ringkasan), **Iuran** (kelola harian + rekap), **Riwayat** (transaksi umum), **Anggota** (kelola anggota) — biar tiap halaman fokus, bukan satu dashboard yang isinya numpuk semua.
 - Perbaikan kecil tapi penting: sesi login sekarang kedaluwarsa (12 jam), request ke backend punya timeout (20 detik, gak nge-hang selamanya kalau Apps Script lelet), opsi password ter-hash (SHA-256) di sheet Config, dan fokus keyboard yang kelihatan untuk aksesibilitas.
 
@@ -33,6 +34,7 @@ finance-app/
 ├── iuran.html              → Kelola iuran harian + rekap bulanan
 ├── riwayat.html            → Riwayat transaksi kas (search, filter, export)
 ├── anggota.html            → CRUD anggota iuran
+├── pengaturan.html         → Info app + Zona Berbahaya (reset semua data)
 ├── css/style.css           → Neo Brutalism theme (diperluas)
 ├── js/
 │   ├── utils.js             → Helper murni (format uang/tanggal, escape HTML, dll) — DIUJI
@@ -44,7 +46,8 @@ finance-app/
 │   ├── dashboard.js               → Logic Beranda
 │   ├── iuran.js                     → Logic halaman Iuran
 │   ├── riwayat.js                    → Logic halaman Riwayat
-│   └── anggota.js                     → Logic halaman Anggota
+│   ├── anggota.js                     → Logic halaman Anggota
+│   └── pengaturan.js                   → Logic halaman Pengaturan (PIN gate)
 ├── backend/Code.gs          → Backend Google Apps Script lengkap (siap paste)
 ├── tests/                     → Unit test (Node built-in test runner, tanpa dependency)
 │   ├── utils.test.js
@@ -82,18 +85,18 @@ Kalau mau bikin manual juga boleh, ini struktur masing-masing sheet:
 |---|---|---|---|---|---|---|---|
 | ID | Tanggal | MemberID | MemberNama | Nominal | Catatan | TransactionID | Created At |
 
-**Config** (opsional — kalau tidak dibuat, login default `admin` / `rahasia123`)
+**Config** (opsional — kalau tidak dibuat, login default `admin` / `rahasia123`, PIN reset default `014715`)
 
-- A1 = `username`, B1 = `password`
-- A2 = `admin`, B2 = `rahasia123` ← ganti sesuai keinginan
+- A1 = `username`, B1 = `password`, C1 = `resetPin`
+- A2 = `admin`, B2 = `rahasia123`, C2 = `014715` ← ganti semuanya sesuai keinginan
 
-**Untuk password yang lebih aman:** isi B2 dengan `sha256:<hash>` alih-alih plaintext. Cara generate hash-nya ada di langkah 2 di bawah.
+**Untuk password/PIN yang lebih aman:** isi B2/C2 dengan `sha256:<hash>` alih-alih plaintext. Cara generate hash-nya ada di langkah 2 di bawah (fungsi yang sama dipakai untuk password maupun PIN).
 
 ### 2. Deploy Google Apps Script
 
 1. Di Google Sheet yang sama: **Extensions → Apps Script**.
 2. Hapus kode default, lalu paste seluruh isi file [`backend/Code.gs`](backend/Code.gs) dari folder ini.
-3. *(Opsional, buat password ter-hash)* Ubah nilai `plaintextPassword` di fungsi `generatePasswordHash()` di bagian bawah file, lalu pilih fungsi itu di dropdown toolbar Apps Script dan klik **Run**. Buka **View → Logs**, salin string `sha256:...` yang muncul, tempel ke `Config!B2`.
+3. *(Opsional, buat password/PIN ter-hash)* Ubah nilai `plaintextPassword` di fungsi `generatePasswordHash()` di bagian bawah file, lalu pilih fungsi itu di dropdown toolbar Apps Script dan klik **Run**. Buka **View → Logs**, salin string `sha256:...` yang muncul, tempel ke `Config!B2` (password) atau `Config!C2` (PIN reset) — fungsi yang sama dipakai untuk keduanya, tinggal ganti nilai yang di-hash.
 4. Simpan project (Ctrl+S / Cmd+S).
 5. Klik **Deploy → New deployment**.
 6. Pilih type: **Web app**.
@@ -132,6 +135,7 @@ Buka `index.html` di browser, atau host di GitHub Pages / Netlify / Vercel / ser
 | Search & Filter | Cari + filter pemasukan/pengeluaran/kategori Iuran |
 | Upload Foto | Disimpan ke Google Drive, URL disimpan di Sheet |
 | Export | CSV riwayat transaksi & CSV rekap iuran bulanan |
+| Reset Semua Data | Zona Berbahaya di halaman Pengaturan, dikunci PIN 6 digit yang divalidasi di server |
 
 ---
 
@@ -143,6 +147,7 @@ Kode lengkap ada di [`backend/Code.gs`](backend/Code.gs) — tinggal copy-paste 
 - `getTransactions`, `addTransaction`, `updateTransaction`, `deleteTransaction`
 - `getMembers`, `addMember`, `updateMember`, `deleteMember`
 - `getIuran`, `setIuranPaid`, `setIuranUnpaid`
+- `resetAllData` (dikunci PIN — lihat bagian Keamanan di bawah)
 
 `setIuranPaid` idempotent — dipanggil dua kali untuk anggota+tanggal yang sama akan meng-update entri yang sudah ada, bukan bikin duplikat. `setIuranUnpaid` menghapus baris iuran **dan** transaksi kas yang ter-link, jadi saldo tidak pernah nyasar.
 
@@ -156,13 +161,14 @@ Logika murni (kalkulasi rekap, format uang/tanggal, dsb) dipisah dari DOM ke `js
 npm test
 ```
 
-Menjalankan 19 unit test (Node built-in test runner, tanpa dependency tambahan) yang meng-cover:
+Menjalankan 22 unit test (Node built-in test runner, tanpa dependency tambahan) yang meng-cover:
 - Format mata uang & tanggal, termasuk edge case (input bukan angka, zona waktu lokal vs UTC).
 - `daysInMonth` termasuk tahun kabisat.
 - Escape HTML (XSS-safety) untuk nama transaksi/anggota yang dirender ke DOM.
 - Rekap transaksi (income/expense/balance).
 - Rekap iuran per tanggal (siapa lunas, siapa belum, total terkumpul), termasuk kasus tanpa anggota aktif (hindari divide-by-zero).
 - Matrix bulanan (siapa bayar tanggal berapa) dan ranking "paling sering nunggak".
+- Validasi format PIN reset (6 digit, hanya angka) untuk kondisi normal maupun edge case (kosong, kepanjangan, huruf).
 
 Backend Apps Script tidak bisa dijalankan lewat `npm test` (butuh runtime Google), tapi seluruh file `.gs` disyntax-check dengan `node --check` sebelum dikirim, dan setiap HTML divalidasi dengan validator W3C (`html5validator`) — nol error struktural pada seluruh halaman.
 
@@ -170,8 +176,9 @@ Backend Apps Script tidak bisa dijalankan lewat `npm test` (butuh runtime Google
 
 ## Catatan Penting
 
-- **Keamanan**: Karena `Who has access = Anyone`, siapa pun yang punya URL Web App bisa memanggil API. Untuk personal/komunitas kecil ini cukup, tapi **jangan bagikan URL ke publik**. Pakai password ter-hash (`sha256:...` di Config) alih-alih plaintext untuk perlindungan tambahan — meski begini pun ini bukan sistem auth tingkat produksi (tidak ada rate-limiting, tidak ada token per-sesi di sisi server). Untuk kas komunitas dengan nilai besar, pertimbangkan solusi dengan auth yang lebih serius.
-- **Foto**: Disimpan di folder `FinanceApp_Photos` di Google Drive milik akun yang deploy script. URL-nya bersifat public (anyone with link).
+- **Keamanan**: Karena `Who has access = Anyone`, siapa pun yang punya URL Web App bisa memanggil API. Untuk personal/komunitas kecil ini cukup, tapi **jangan bagikan URL ke publik**. Pakai password/PIN ter-hash (`sha256:...` di Config) alih-alih plaintext untuk perlindungan tambahan — meski begini pun ini bukan sistem auth tingkat produksi (tidak ada rate-limiting, tidak ada token per-sesi di sisi server). Untuk kas komunitas dengan nilai besar, pertimbangkan solusi dengan auth yang lebih serius.
+- **PIN Reset Data**: Default-nya `014715` kalau kolom `Config!C2` kosong/tidak ada. **Sangat disarankan ganti** — siapa pun yang tahu PIN default bisa menghapus semua data kas kamu. PIN divalidasi di server (`Code.gs`), bukan cuma di JavaScript frontend, jadi tidak bisa dilewatin dengan baca source code lalu manggil API langsung.
+- **Foto**: Disimpan di folder `FinanceApp_Photos` di Google Drive milik akun yang deploy script. URL-nya bersifat public (anyone with link). Foto ikut terhapus saat reset data.
 - **Offline**: Aplikasi membutuhkan koneksi internet karena data ada di Google Sheets.
 - **Kuota Apps Script**: Wajar untuk pemakaian personal/komunitas kecil (puluhan-ratusan anggota). Untuk skala sangat besar (ribuan entri iuran per bulan), pertimbangkan migrasi ke database sungguhan.
 
@@ -183,6 +190,7 @@ Backend Apps Script tidak bisa dijalankan lewat `npm test` (butuh runtime Google
 |---|---|
 | Warna aksen | `css/style.css` → `--accent` |
 | Username & password | Sheet `Config` (plaintext atau `sha256:...`) |
+| PIN reset data | Sheet `Config` kolom C (plaintext atau `sha256:...`), default `014715` |
 | Daftar kategori transaksi | `dashboard.html` & `riwayat.html` → `<select id="tx-category">` |
 | URL backend | `js/api.js` → `SCRIPT_URL` |
 | Durasi sesi login | `js/auth.js` → `SESSION_TTL_MS` |
