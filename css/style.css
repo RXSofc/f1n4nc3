@@ -20,6 +20,14 @@
   --gray: #f5f5f5;
   --muted: #666666;
   --font: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Native cross-document page transitions between dashboard/iuran/riwayat/anggota/pengaturan.
+   Progressive enhancement: browsers that don't support it just ignore this and navigate normally. */
+@view-transition {
+  navigation: auto;
 }
 
 *,
@@ -73,7 +81,7 @@ body {
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.1s;
+  transition: transform 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out), background-color 0.15s ease;
   text-decoration: none;
   color: var(--text);
   background: var(--bg);
@@ -83,6 +91,16 @@ body {
 .btn:active {
   transform: translate(2px, 2px);
   box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn:not(:disabled):hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 #000000;
+  }
+  .btn-sm:not(:disabled):hover {
+    box-shadow: 3px 3px 0 #000000;
+  }
 }
 
 .btn-primary {
@@ -260,6 +278,7 @@ textarea.form-control {
   background: none;
   cursor: pointer;
   font-family: var(--font);
+  transition: color 0.2s ease;
 }
 
 .nav-item.active {
@@ -269,10 +288,16 @@ textarea.form-control {
 .nav-item svg {
   width: 24px;
   height: 24px;
+  transition: transform 0.2s var(--ease-spring), stroke 0.2s ease;
 }
 
 .nav-item.active svg {
   stroke: var(--text);
+  transform: translateY(-2px);
+}
+
+.nav-item:active svg {
+  transform: scale(0.82);
 }
 
 /* ---------- Dashboard ---------- */
@@ -280,14 +305,39 @@ textarea.form-control {
   padding-bottom: 90px;
 }
 
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .balance-card {
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent) 0%, #eaffb0 60%, var(--accent) 100%);
   border: var(--border-width) solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 24px;
+  padding: 26px 24px;
   margin-bottom: 20px;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+  animation: fadeSlideUp 0.45s var(--ease-out) both;
+}
+
+.balance-card::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -20%;
+  width: 60%;
+  height: 180%;
+  background: radial-gradient(circle, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 70%);
+  pointer-events: none;
 }
 
 .balance-label {
@@ -296,12 +346,16 @@ textarea.form-control {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 4px;
+  position: relative;
+  z-index: 1;
 }
 
 .balance-amount {
   font-size: 2.25rem;
   font-weight: 900;
   letter-spacing: -1px;
+  position: relative;
+  z-index: 1;
 }
 
 .stats-grid {
@@ -317,6 +371,20 @@ textarea.form-control {
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   padding: 16px;
+  animation: fadeSlideUp 0.45s var(--ease-out) both;
+  transition: transform 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
+}
+
+.stats-grid .stat-card:nth-child(1) { animation-delay: 0.05s; }
+.stats-grid .stat-card:nth-child(2) { animation-delay: 0.1s; }
+.stats-grid .stat-card:nth-child(3) { animation-delay: 0.15s; }
+.stats-grid .stat-card:nth-child(4) { animation-delay: 0.2s; }
+
+@media (hover: hover) and (pointer: fine) {
+  .stat-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0 #000000;
+  }
 }
 
 .stat-card .label {
@@ -366,18 +434,33 @@ textarea.form-control {
   box-shadow: var(--shadow-sm);
   background: var(--bg);
   cursor: pointer;
-  transition: transform 0.1s;
+  transition: transform 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
+  animation: fadeSlideUp 0.35s var(--ease-out) both;
 }
+
+.tx-item:nth-child(1) { animation-delay: 0.02s; }
+.tx-item:nth-child(2) { animation-delay: 0.06s; }
+.tx-item:nth-child(3) { animation-delay: 0.1s; }
+.tx-item:nth-child(4) { animation-delay: 0.14s; }
+.tx-item:nth-child(5) { animation-delay: 0.18s; }
+.tx-item:nth-child(n+6) { animation-delay: 0.2s; }
 
 .tx-item:active {
   transform: translate(1px, 1px);
   box-shadow: none;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .tx-item:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0 #000000;
+  }
+}
+
 .tx-icon {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 2px solid var(--border);
   display: flex;
   align-items: center;
@@ -387,11 +470,11 @@ textarea.form-control {
 }
 
 .tx-icon.income {
-  background: #e8f5e9;
+  background: linear-gradient(145deg, #e8f5e9, #b9f6ca);
 }
 
 .tx-icon.expense {
-  background: #ffebee;
+  background: linear-gradient(145deg, #ffebee, #ffcdd2);
 }
 
 .tx-info {
@@ -441,15 +524,22 @@ textarea.form-control {
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   z-index: 200;
-  display: none;
+  display: flex;
   align-items: flex-end;
   justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0s linear 0.2s;
 }
 
 .overlay.show {
-  display: flex;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.2s ease, visibility 0s linear 0s;
 }
 
 .modal {
@@ -462,7 +552,13 @@ textarea.form-control {
   overflow-y: auto;
   padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
   box-shadow: 0 -4px 0 #000;
-  animation: slideUp 0.25s ease;
+  animation: none;
+}
+
+/* Scoped to .overlay.show so the animation-name actually changes (none -> slideUp)
+   every time the modal opens, instead of only once when the page first loads. */
+.overlay.show .modal {
+  animation: slideUp 0.35s var(--ease-out);
 }
 
 @keyframes slideUp {
@@ -534,10 +630,21 @@ textarea.form-control {
   cursor: pointer;
   white-space: nowrap;
   font-family: var(--font);
+  transition: background-color 0.2s ease, transform 0.15s var(--ease-out);
+}
+
+.chip:active {
+  transform: scale(0.94);
 }
 
 .chip.active {
   background: var(--accent);
+  animation: popIn 0.25s var(--ease-spring);
+}
+
+@keyframes popIn {
+  from { transform: scale(0.85); }
+  to { transform: scale(1); }
 }
 
 /* ---------- Photo Preview ---------- */
@@ -563,7 +670,7 @@ textarea.form-control {
   position: fixed;
   bottom: 100px;
   left: 50%;
-  transform: translateX(-50%) translateY(20px);
+  transform: translateX(-50%) translateY(16px) scale(0.94);
   background: var(--text);
   color: var(--bg);
   padding: 12px 24px;
@@ -572,15 +679,17 @@ textarea.form-control {
   font-size: 0.875rem;
   z-index: 300;
   opacity: 0;
-  transition: opacity 0.2s, transform 0.2s;
+  transition: opacity 0.25s var(--ease-spring), transform 0.25s var(--ease-spring);
   pointer-events: none;
   border: var(--border-width) solid var(--border);
   box-shadow: var(--shadow);
+  max-width: calc(100% - 48px);
+  text-align: center;
 }
 
 .toast.show {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translateX(-50%) translateY(0) scale(1);
 }
 
 .toast.success {
@@ -610,15 +719,22 @@ textarea.form-control {
 .loading-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(255,255,255,0.7);
-  display: none;
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  display: flex;
   align-items: center;
   justify-content: center;
   z-index: 400;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0s linear 0.15s;
 }
 
 .loading-overlay.show {
-  display: flex;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.15s ease, visibility 0s linear 0s;
 }
 
 /* ---------- Responsive ---------- */
@@ -673,6 +789,7 @@ textarea:focus-visible,
   padding: 20px 16px 4px;
   max-width: 480px;
   margin: 0 auto;
+  animation: fadeSlideUp 0.4s var(--ease-out) both;
 }
 
 .page-eyebrow {
@@ -706,13 +823,14 @@ textarea:focus-visible,
   height: 44px;
   border-radius: 50%;
   border: 2px solid var(--border);
-  background: var(--accent);
+  background: linear-gradient(145deg, var(--accent), #9be000);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 900;
   font-size: 0.9rem;
   flex-shrink: 0;
+  transition: transform 0.2s var(--ease-spring);
 }
 
 .avatar.sm {
@@ -722,7 +840,7 @@ textarea:focus-visible,
 }
 
 .avatar.muted {
-  background: var(--gray);
+  background: linear-gradient(145deg, #f0f0f0, #dcdcdc);
 }
 
 /* ---------- Progress bar ---------- */
@@ -737,16 +855,17 @@ textarea:focus-visible,
 
 .progress-fill {
   height: 100%;
-  background: var(--income);
-  transition: width 0.3s ease;
+  background: linear-gradient(90deg, var(--income), #00e676);
+  transition: width 0.6s var(--ease-out);
+  border-radius: 999px;
 }
 
 .progress-fill.warn {
-  background: var(--accent);
+  background: linear-gradient(90deg, var(--accent-dark), var(--accent));
 }
 
 .progress-fill.danger {
-  background: var(--danger);
+  background: linear-gradient(90deg, #ff1a1a, var(--danger));
 }
 
 /* ---------- Badge ---------- */
@@ -797,6 +916,7 @@ textarea:focus-visible,
   font-size: 1.1rem;
   font-weight: 900;
   cursor: pointer;
+  transition: transform 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
 }
 
 .date-nav-btn:active {
@@ -804,14 +924,34 @@ textarea:focus-visible,
   box-shadow: none;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .date-nav-btn:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 #000000;
+  }
+}
+
 /* ---------- Iuran summary card ---------- */
 .iuran-summary {
-  background: var(--bg);
+  background: linear-gradient(135deg, var(--bg) 0%, #f7fff0 100%);
   border: var(--border-width) solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 18px;
   margin-bottom: 20px;
+  animation: fadeSlideUp 0.4s var(--ease-out) both;
+  transition: transform 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
+}
+
+a.iuran-summary {
+  display: block;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  a.iuran-summary:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 #000000;
+  }
 }
 
 .iuran-summary-top {
@@ -843,10 +983,26 @@ textarea:focus-visible,
   box-shadow: var(--shadow-sm);
   background: var(--bg);
   margin-bottom: 10px;
+  animation: fadeSlideUp 0.35s var(--ease-out) both;
+  transition: transform 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out), background 0.3s ease;
 }
 
+.member-row:nth-child(1) { animation-delay: 0.02s; }
+.member-row:nth-child(2) { animation-delay: 0.06s; }
+.member-row:nth-child(3) { animation-delay: 0.1s; }
+.member-row:nth-child(4) { animation-delay: 0.14s; }
+.member-row:nth-child(5) { animation-delay: 0.18s; }
+.member-row:nth-child(n+6) { animation-delay: 0.2s; }
+
 .member-row.is-paid {
-  background: #f4fff2;
+  background: linear-gradient(135deg, #f4fff2, #e3ffe0);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .member-row:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0 #000000;
+  }
 }
 
 .member-info {
@@ -878,6 +1034,7 @@ textarea:focus-visible,
   cursor: pointer;
   flex-shrink: 0;
   padding: 0;
+  transition: background-color 0.25s ease;
 }
 
 .toggle::after {
@@ -890,7 +1047,7 @@ textarea:focus-visible,
   border-radius: 50%;
   background: var(--bg);
   border: 2px solid var(--border);
-  transition: transform 0.15s ease;
+  transition: transform 0.3s var(--ease-spring);
 }
 
 .toggle.on {
@@ -985,7 +1142,14 @@ textarea:focus-visible,
   margin-bottom: 8px;
   font-size: 0.85rem;
   font-weight: 700;
+  background: linear-gradient(135deg, #fff, #fff5f5);
+  animation: fadeSlideUp 0.35s var(--ease-out) both;
 }
+
+.arrears-item:nth-child(1) { animation-delay: 0.02s; }
+.arrears-item:nth-child(2) { animation-delay: 0.06s; }
+.arrears-item:nth-child(3) { animation-delay: 0.1s; }
+.arrears-item:nth-child(n+4) { animation-delay: 0.14s; }
 
 .arrears-item .count {
   color: var(--danger);
@@ -1079,6 +1243,7 @@ textarea:focus-visible,
   color: var(--text);
   cursor: pointer;
   text-decoration: none;
+  transition: transform 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
 }
 
 .icon-btn:active {
@@ -1089,16 +1254,28 @@ textarea:focus-visible,
 .icon-btn svg {
   width: 18px;
   height: 18px;
+  transition: transform 0.3s var(--ease-spring);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .icon-btn:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 #000000;
+  }
+  .icon-btn:hover svg {
+    transform: rotate(45deg);
+  }
 }
 
 /* ---------- Danger zone (Pengaturan page) ---------- */
 .danger-zone {
-  background: #fff5f5;
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
   border: var(--border-width) solid var(--danger);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 18px;
   margin-top: 8px;
+  animation: fadeSlideUp 0.4s var(--ease-out) both;
 }
 
 .danger-zone h3 {
@@ -1115,12 +1292,13 @@ textarea:focus-visible,
 }
 
 .settings-card {
-  background: var(--bg);
+  background: linear-gradient(135deg, var(--bg) 0%, #fafffa 100%);
   border: var(--border-width) solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   padding: 16px 18px;
   margin-bottom: 16px;
+  animation: fadeSlideUp 0.35s var(--ease-out) both;
 }
 
 .settings-card .row {
