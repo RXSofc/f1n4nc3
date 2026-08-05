@@ -1,12 +1,7 @@
-/**
- * auth.js — Session management with localStorage
- */
-
 const Auth = (() => {
   const SESSION_KEY = 'finance_session';
-  const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+  const SESSION_TTL_MS = 15 * 60 * 60 * 1000; // 15 Jam
 
-  /** Save user session after successful login */
   function setSession(user) {
     const now = Date.now();
     const session = {
@@ -17,7 +12,7 @@ const Auth = (() => {
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   }
 
-  /** Get current session (or null if missing/expired) */
+
   function getSession() {
     try {
       const raw = localStorage.getItem(SESSION_KEY);
@@ -33,24 +28,22 @@ const Auth = (() => {
     }
   }
 
-  /** Check if user is logged in */
+  
   function isLoggedIn() {
     return !!getSession();
   }
 
-  /** Clear session (logout) */
+  
   function logout() {
     localStorage.removeItem(SESSION_KEY);
   }
 
-  /** Redirect to login if not authenticated (call on every protected page) */
   function requireAuth() {
     if (!isLoggedIn()) {
       window.location.href = 'index.html';
     }
   }
 
-  /** Redirect to dashboard if already logged in (call on login page) */
   function redirectIfLoggedIn() {
     if (isLoggedIn()) {
       window.location.href = 'dashboard.html';
